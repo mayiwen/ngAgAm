@@ -1,19 +1,28 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {AmChartsService} from "@amcharts/amcharts3-angular";
 import {GridOptions} from 'ag-grid-community';
-
+import { TestComponent } from '../test/test.component';
+import { Test1Component } from '../test1/test1.component';
 @Component({
   selector: 'app-grid',
   templateUrl: './grid.component.html',
   styleUrls: ['./grid.component.less']
 })
 export class GridComponent implements OnInit, OnDestroy {
+  frameworkComponents: any = {
+    testComponent: TestComponent,
+    test1Component: Test1Component
+  }
   agGridOptions: GridOptions = {
     columnDefs: [
       {
         headerName: '分组A',
         children: [
-          {field: 'make'},
+          {
+            field: 'make',
+            headerComponent: 'testComponent',
+            cellRenderer: 'test1Component'
+          },
           {field: 'model'},
         ]
       },
@@ -36,7 +45,8 @@ export class GridComponent implements OnInit, OnDestroy {
   private chart: any;
 
   constructor(
-    private AmCharts: AmChartsService
+    private AmCharts: AmChartsService,
+
   ) {
   }
 
