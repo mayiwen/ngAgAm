@@ -10,8 +10,8 @@ import { IAfterGuiAttachedParams, IHeaderParams } from 'ag-grid-community';
 export class Test1Component implements OnInit, IHeaderAngularComp {
   data: any
   afterGuiAttached(params?: IAfterGuiAttachedParams): void {
-    console.log('afterGuiAttached')
-    console.log(params)
+    // console.log('afterGuiAttached')
+    // console.log(params)
   }
 
   agInit(params: IHeaderParams): void {
