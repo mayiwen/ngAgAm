@@ -1,492 +1,218 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {AmChartsService} from "@amcharts/amcharts3-angular";
-import {GridOptions, ViewportChangedEvent} from 'ag-grid-community';
-import { TestComponent } from '../test/test.component';
-import { Test1Component } from '../test1/test1.component';
+import { Component } from '@angular/core';
+import {
+  ColDef,
+  FirstDataRenderedEvent,
+  GridApi,
+  GridReadyEvent,
+  ICellRendererParams,
+  IDatasource,
+  IGetRowsParams,
+  RowClassParams,
+  ValueFormatterParams,
+} from 'ag-grid-community';
+
 @Component({
   selector: 'app-grid',
-  templateUrl: './grid.component.html',
-  styleUrls: ['./grid.component.less']
+  templateUrl: './grid.component.html'
 })
-export class GridComponent implements OnInit, OnDestroy {
-  frameworkComponents: any = {
-    testComponent: TestComponent,
-    test1Component: Test1Component
-  }
-  agGridOptions: GridOptions = {
-    rowModelType:"infinite",
-    cacheBlockSize: 10, // 默认是20个 每次加载的数据
-    onViewportChanged: (event: ViewportChangedEvent) => {
-      // here you have access to event.firstRow and event.lastRow
-      // On initialization, firstRow is 0 and lastRow -1
-      console.log('这是打印的事件')
-      console.log(event)
-    },
-    columnDefs: [
-      // {
-      //   headerName: '分组A',
-      //   children: [
-      //     {
-      //       field: 'make',
-      //       headerComponent: 'testComponent',
-      //       cellRenderer: 'test1Component'
-      //     },
-      //     {field: 'model'},
-      //   ]
-      // },
-      // {
-      //   headerName: '分组B',
-      //   children: [
-      //     {field: 'price'}
-      //   ]
-      // },
-      {
-        headerName: 'ID',
-        maxWidth: 100,
-        valueGetter: 'node.id',
-        cellRenderer: (params) => {
-          if (params.value !== undefined) {
-            return params.value;
-          } else {
-            return '<img src="https://www.ag-grid.com/example-assets/loading.gif">';
-          }
-        },
+export class GridComponent {
+  private gridApi!: GridApi;
+
+  public columnDefs: ColDef[] = [
+    {
+      headerName: 'Item ID',
+      field: 'id',
+      valueGetter: 'node.id',
+      cellRenderer: (params: ICellRendererParams) => {
+        if (params.value !== undefined) {
+          return params.value;
+        } else {
+          return '<img src="https://www.ag-grid.com/example-assets/loading.gif">';
+        }
       },
-      { field: 'athlete', minWidth: 150 },
-      { field: 'age' },
-      { field: 'country', minWidth: 150 },
-      { field: 'year' },
-      { field: 'date', minWidth: 150 },
-      { field: 'sport', minWidth: 150 },
-      { field: 'gold' },
-      { field: 'silver' },
-      { field: 'bronze' },
-      { field: 'total' },
-    ],
+    },
+    { field: 'make' },
+    { field: 'model' },
+    {
+      field: 'price',
+      valueFormatter: valueFormatter,
+    },
+  ];
+  public datasource: IDatasource = {
+    rowCount: undefined,
+    getRows: (params: IGetRowsParams) => {
+      console.log('asking for ' + params.startRow + ' to ' + params.endRow);
+      // At this point in your code, you would call the server.
+      // To make the demo look real, wait for 500ms before returning
+      setTimeout(function () {
+        // take a slice of the total rows
+        const rowsThisPage = allOfTheData.slice(params.startRow, params.endRow);
+        // make a copy of each row - this is what would happen if taking data from server
+        for (let i = 0; i < rowsThisPage.length; i++) {
+          const item = rowsThisPage[i];
+          // this is a trick to copy an object
+          const itemCopy = JSON.parse(JSON.stringify(item));
+          rowsThisPage[i] = itemCopy;
+        }
+        // if on or after the last page, work out the last row.
+        let lastRow = -1;
+        if (allOfTheData.length <= params.endRow) {
+          lastRow = allOfTheData.length;
+        }
+        // call the success callback
+        params.successCallback(rowsThisPage, lastRow);
+      }, 500);
+    },
+  };
+  public defaultColDef: ColDef = {
+    resizable: true,
+  };
+  public rowSelection: 'single' | 'multiple' = 'multiple';
+  public rowModelType = 'infinite';
+  public maxBlocksInCache = 2;
+  public infiniteInitialRowCount = 20;
+  public maxConcurrentDatasourceRequests = 2;
+  public getRowId = (params: any) => {
+    return params.id.toString();
+  };
+  // public getRowStyle: (params: RowClassParams) => RowStyle | undefined = (
+  //   params: RowClassParams
+  // ): RowStyle | undefined => {
+  //   if (params.data && params.data.make === 'Honda') {
+  //     return {
+  //       fontWeight: 'bold',
+  //     };
+  //   }
+  //   return {
+  //     fontWeight: 'normal',
+  //   };
+  // };
+  public rowData!: any[];
 
-    rowData: [
-      {make: 'Toyota', model: 'Celica', price: 3500},
-      {make: 'Ford', model: 'Mondeo', price: 32000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-    ]
+  onFirstDataRendered(params: FirstDataRenderedEvent) {
+    params.api.sizeColumnsToFit();
   }
 
-  // private chart: any;
-
-  constructor(
-    private AmCharts: AmChartsService,
-
-  ) {
+  insertItemsAt2AndRefresh(count: number) {
+    insertItemsAt2(count);
+    // if the data has stopped looking for the last row, then we need to adjust the
+    // row count to allow for the extra data, otherwise the grid will not allow scrolling
+    // to the last row. eg if we have 1000 rows, scroll all the way to the bottom (so
+    // maxRowFound=true), and then add 5 rows, the rowCount needs to be adjusted
+    // to 1005, so grid can scroll to the end. the grid does NOT do this for you in the
+    // refreshInfiniteCache() method, as this would be assuming you want to do it which
+    // is not true, maybe the row count is constant and you just want to refresh the details.
+    const maxRowFound = this.gridApi.isLastRowIndexKnown();
+    if (maxRowFound) {
+      const rowCount = this.gridApi.getInfiniteRowCount() || 0;
+      this.gridApi.setRowCount(rowCount + count);
+    }
+    // get grid to refresh the data
+    this.gridApi.refreshInfiniteCache();
   }
 
-  ngOnInit(): void {
-    // this.chart = this.AmCharts.makeChart("chartdiv", {
-    //   "theme": "none",
-    //   "type": "serial",
-    //   "startDuration": 2,
-    //   "dataProvider": [{"country": "USA", "visits": 4025, "color": "#FF0F00"}, {
-    //     "country": "China",
-    //     "visits": 1882,
-    //     "color": "#FF6600"
-    //   }, {"country": "Japan", "visits": 1809, "color": "#FF9E01"}, {
-    //     "country": "Germany",
-    //     "visits": 1322,
-    //     "color": "#FCD202"
-    //   }, {"country": "UK", "visits": 1122, "color": "#F8FF01"}, {
-    //     "country": "France",
-    //     "visits": 1114,
-    //     "color": "#B0DE09"
-    //   }],
-    //   "valueAxes": [{"position": "left", "axisAlpha": 0, "gridAlpha": 0}],
-    //   "graphs": [{
-    //     "balloonText": "[[category]]: <b>[[value]]</b>",
-    //     "colorField": "color",
-    //     "fillAlphas": 0.85,
-    //     "lineAlpha": 0.1,
-    //     "type": "column",
-    //     "topRadius": 1,
-    //     "valueField": "visits"
-    //   }],
-    //   "depth3D": 60,
-    //   "angle": 30,
-    //   "chartCursor": {"categoryBalloonEnabled": false, "cursorAlpha": 0, "zoomable": false},
-    //   "categoryField": "country",
-    //   "categoryAxis": {"gridPosition": "start", "axisAlpha": 0, "gridAlpha": 0},
-    //   "exportConfig": {
-    //     "menuTop": "20px",
-    //     "menuRight": "20px",
-    //     "menuItems": [{"icon": '/lib/3/images/export.png', "format": 'png'}]
-    //   }
-    // }, 0);
+  removeItem(start: number, limit: number) {
+    allOfTheData.splice(start, limit);
+    this.gridApi.refreshInfiniteCache();
   }
-  gridApi: any
-  gridColumnApi: any
-  onGridReady(params: any) {
-    console.log('onGridReady11111111')
+
+  refreshCache() {
+    this.gridApi.refreshInfiniteCache();
+  }
+
+  purgeCache() {
+    this.gridApi.purgeInfiniteCache();
+  }
+
+  setRowCountTo200() {
+    this.gridApi.setRowCount(200, false);
+  }
+
+  rowsAndMaxFound() {
+    console.log(
+      'getInfiniteRowCount() => ' + this.gridApi.getInfiniteRowCount()
+    );
+    console.log(
+      'isLastRowIndexKnown() => ' + this.gridApi.isLastRowIndexKnown()
+    );
+  }
+
+  // function just gives new prices to the row data, it does not update the grid
+  setPricesHigh() {
+    allOfTheData.forEach(function (dataItem) {
+      dataItem.price = Math.round(55500 + 400 * (0.5 + Math.random()));
+    });
+  }
+
+  setPricesLow() {
+    allOfTheData.forEach(function (dataItem) {
+      dataItem.price = Math.round(1000 + 100 * (0.5 + Math.random()));
+    });
+  }
+
+  jumpTo500() {
+    // first up, need to make sure the grid is actually showing 500 or more rows
+    if ((this.gridApi.getInfiniteRowCount() || 0) < 501) {
+      this.gridApi.setRowCount(501, false);
+    }
+    // next, we can jump to the row
+    this.gridApi.ensureIndexVisible(500);
+  }
+
+  onGridReady(params: GridReadyEvent) {
     this.gridApi = params.api;
-    this.gridColumnApi = params.columnApi;
 
-    const updateData = (data: any) => {
-      const dataSource = {
-        rowCount: undefined,
-        getRows: (params: any) => {
-          console.log(111)
-          // At this point in your code, you would call the server.
-          // To make the demo look real, wait for 500ms before returning
-          setTimeout(function () {
-            // take a slice of the total 
-            const { startRow,endRow } =params
-            const rowsThisPage = data.slice(startRow,endRow)
-            // const rowsThisPage = data.sstartRowlice(params.startRow, params.endRow);
-            // if on or after the last page, work out the last row.
-            let lastRow = -1;
-            if (data.length <= endRow) {
-              if (data.length < 100) {
-                lastRow = data.length;
-
-              }else{
-                //当我们第一页滚动到头了，就让分页加1，并进行请求，这样我们就获取到了下一页数据，然后this.startRow=0，this.endRow=10也进行重置，这样就接着滑动，实现了滚动分页的效果
-                // this.startRow=0
-                // this.endRow=10
-                // this.pagesize++
-                // fetch('https://www.ag-grid.com/example-assets/olympic-winners.json')
-                //  .then((data) => this.data=data);
-                //  }
-                // }
-              }
-            }
-            
-            // if (endRow < )
-            // call the success callback
-            params.successCallback(rowsThisPage, lastRow);
-          }, 500);
-        },
-      };
-      console.log(3,dataSource)
-      params.api.setDatasource(dataSource);
-    };
-
-    fetch('https://www.ag-grid.com/example-assets/olympic-winners.json')
-      .then((resp) => resp.json())
-      .then((data) => {
-        console.log('data')
-        console.log('这是aggrid返回的内容')
-        console.log(data)
-        updateData(data)});
+    sequenceId = 1;
+    allOfTheData = [];
+    for (let i = 0; i < 1; i++) {
+      allOfTheData.push(createRowData(sequenceId++));
+    }
   }
-
-
-  ngOnDestroy() {
-    // this.AmCharts.destroyChart(this.chart);
+  clear() {
+    allOfTheData.length = 0
+    this.gridApi.refreshInfiniteCache();
   }
-
-  hello() {
-
-    // @ts-ignore
-    this.agGridOptions.api.setRowData([
-      {make: 'Toyota', model: 'Celica', price: 3500},
-      {make: 'Ford', model: 'Mondeo', price: 32000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-      {make: 'Porsche', model: 'Boxter', price: 720000},
-    ]);
-    // this.chart = this.AmCharts.makeChart("chartdiv", {
-    //   "theme": "none",
-    //   "type": "serial",
-    //   "startDuration": 2,
-    //   "dataProvider": [{"country": "USA", "visits": 500, "color": "#FF0F00"}, {
-    //     "country": "China",
-    //     "visits": 1000,
-    //     "color": "#FF6600"
-    //   }, {"country": "Japan", "visits": 6000, "color": "#FF9E01"}, {
-    //     "country": "Germany",
-    //     "visits": 2000,
-    //     "color": "#FCD202"
-    //   }, {"country": "UK", "visits": 1122, "color": "#F8FF01"}, {
-    //     "country": "France",
-    //     "visits": 3000,
-    //     "color": "#B0DE09"
-    //   }],
-    //   "valueAxes": [{"position": "left", "axisAlpha": 0, "gridAlpha": 0}],
-    //   "graphs": [{
-    //     "balloonText": "[[category]]: <b>[[value]]</b>",
-    //     "colorField": "color",
-    //     "fillAlphas": 0.85,
-    //     "lineAlpha": 0.1,
-    //     "type": "column",
-    //     "topRadius": 1,
-    //     "valueField": "visits"
-    //   }],
-    //   "depth3D": 60,
-    //   "angle": 30,
-    //   "chartCursor": {"categoryBalloonEnabled": false, "cursorAlpha": 0, "zoomable": false},
-    //   "categoryField": "country",
-    //   "categoryAxis": {"gridPosition": "start", "axisAlpha": 0, "gridAlpha": 0},
-    //   "exportConfig": {
-    //     "menuTop": "20px",
-    //     "menuRight": "20px",
-    //     "menuItems": [{"icon": '/lib/3/images/export.png', "format": 'png'}]
-    //   }
-    // }, 0);
+  update() {
+    allOfTheData[0].price = allOfTheData[0].price  + 1
+    this.gridApi.refreshInfiniteCache();
   }
 }
+
+const valueFormatter = function (params: ValueFormatterParams) {
+  if (typeof params.value === 'number') {
+    return '£' + params.value.toLocaleString();
+  } else {
+    return params.value;
+  }
+};
+// this counter is used to give id's to the rows
+var sequenceId = 0;
+var allOfTheData: any[] = [];
+function createRowData(id: number) {
+  const makes = ['Toyota', 'Ford', 'Porsche', 'Chevy', 'Honda', 'Nissan'];
+  const models = [
+    'Cruze',
+    'Celica',
+    'Mondeo',
+    'Boxster',
+    'Genesis',
+    'Accord',
+    'Taurus',
+  ];
+  return {
+    id: id,
+    make: makes[id % makes.length],
+    model: models[id % models.length],
+    price: 72000,
+  };
+}
+function insertItemsAt2(count: number) {
+  const newDataItems = [];
+  for (let i = 0; i < count; i++) {
+    const newItem = createRowData(sequenceId++);
+    allOfTheData.splice(2, 0, newItem);
+    newDataItems.push(newItem);
+  }
+  return newDataItems;
+}
+

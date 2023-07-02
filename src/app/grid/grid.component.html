@@ -1,16 +1,40 @@
-<div class="grid">
-  <button (click)="hello()">点击</button>
 
-  <ag-grid-angular
-    style="width: 100%; height: 500px;"
-    class="ag-theme-alpine"
-    [frameworkComponents]="frameworkComponents"
-    [gridOptions]="agGridOptions"
-    (gridReady)="onGridReady($event)"
-  >
-  <!-- rowModelType="infinite" -->
-
-  </ag-grid-angular>
-  <!-- <div id="chartdiv" [style.width.%]="100" [style.height.px]="500"></div> -->
-</div>
-
+<div style="display: flex; flex-direction: column; height: 100%;">
+    <div style="margin-bottom: 10px;">
+      <button (click)="insertItemsAt2AndRefresh(5)">Insert Rows</button>
+      <button (click)="removeItem(3, 10)">Delete Rows</button>
+      <button (click)="setRowCountTo200()">Set Row Count</button>
+      <button (click)="rowsAndMaxFound()">Print Info</button>
+      <button (click)="jumpTo500()">Jump to 500</button>
+    </div>
+    <div style="margin-bottom: 10px;">
+      <button (click)="setPricesHigh()">Set Prices High</button>
+      <button (click)="setPricesLow()">Set Prices Low</button>
+      <button (click)="refreshCache()">Refresh Cache</button>
+      <button (click)="purgeCache()">Purge Cache</button>
+    </div>
+    <div style="margin-bottom: 10px;">
+      <button (click)="clear()">clear</button>
+      <button (click)="update()">update</button>
+      <button (click)="refreshCache()">Refresh Cache</button>
+      <button (click)="purgeCache()">Purge Cache</button>
+    </div>
+    <div style="flex-grow: 1;">
+      <ag-grid-angular
+        style="width: 800px; height: 800px;"
+        class="ag-theme-alpine"
+        [columnDefs]="columnDefs"
+        [datasource]="datasource"
+        [defaultColDef]="defaultColDef"
+        [rowSelection]="rowSelection"
+        [rowModelType]="rowModelType"
+        [maxBlocksInCache]="maxBlocksInCache"
+        [infiniteInitialRowCount]="infiniteInitialRowCount"
+        [maxConcurrentDatasourceRequests]="maxConcurrentDatasourceRequests"
+        [getRowNodeId]="getRowId"
+        [rowData]="rowData"
+        (firstDataRendered)="onFirstDataRendered($event)"
+        (gridReady)="onGridReady($event)"
+      ></ag-grid-angular>
+    </div>
+  </div>
