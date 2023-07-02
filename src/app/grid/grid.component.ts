@@ -164,7 +164,7 @@ export class GridComponent {
 
     sequenceId = 1;
     allOfTheData = [];
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 10000000; i++) {
       allOfTheData.push(createRowData(sequenceId++));
     }
   }
